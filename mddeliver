@@ -12,9 +12,9 @@ use Getopt::Long;
 use Pod::Usage;
 use strict;
 
-my ($dir, $help, $draft, $flagged, $passed, $replied, $seen);
+my ($dirname, $help, $draft, $flagged, $passed, $replied, $seen);
 GetOptions(
-	'dir=s'		=> \$dir,
+	'dir=s'		=> \$dirname,
 	'help'		=> \$help,
 	'draft'		=> \$draft,
 	'flagged'	=> \$flagged,
@@ -23,7 +23,12 @@ GetOptions(
 	'seen'		=> \$seen,
 );
 
-pod2usage('-verbose' => 99, '-sections' => 'USAGE|OPTIONS') if ($help);
+pod2usage('-verbose' => 99, '-sections' => 'USAGE|OPTIONS') if ($help || !defined($dirname));
+
+if (! -d $dirname || ! -w $dirname) {
+	print STDERR "Error: '$dirname' is not a directory or cannot be written to\n";
+	exit(1);
+}
 
 my $msg = Mail::Message->read(\*STDIN);
 $msg->label(
@@ -34,7 +39,7 @@ $msg->label(
 	'seen'		=> $seen,
 );
 
-my $dir = Mail::Box::Maildir->new('folder' => $dir, 'access' => 'a');
+my $dir = Mail::Box::Maildir->new('folder' => $dirname, 'access' => 'a');
 $dir->addMessage($msg);
 
 __END__
