@@ -1,0 +1,113 @@
+#!/usr/bin/perl
+#
+# deliver a message to a Maildir and set flags on it
+#
+# Copyright 2014 Gavin Brown. This program is Free Software; you can use it and/
+# or modify it under the same terms as Perl itself.
+#
+use Mail::Message;
+use Mail::Box::Maildir;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use strict;
+
+my ($dir, $help, $draft, $flagged, $passed, $replied, $seen);
+GetOptions(
+	'dir=s'		=> \$dir,
+	'help'		=> \$help,
+	'draft'		=> \$draft,
+	'flagged'	=> \$flagged,
+	'passed'	=> \$passed,
+	'replied'	=> \$replied,
+	'seen'		=> \$seen,
+);
+
+pod2usage('-verbose' => 99, '-sections' => 'USAGE|OPTIONS') if ($help);
+
+my $msg = Mail::Message->read(\*STDIN);
+$msg->label(
+	'draft'		=> $draft,
+	'flagged'	=> $flagged,
+	'passed'	=> $passed,
+	'replied'	=> $replied,
+	'seen'		=> $seen,
+);
+
+my $dir = Mail::Box::Maildir->new('folder' => $dir, 'access' => 'a');
+$dir->addMessage($msg);
+
+__END__
+
+=head1 NAME
+
+mddeliver - deliver a message to a Maildir with optional flags
+
+=head1 DESCRIPTION
+
+Mail filtering tools such as L<maildrop(1)> provide an effective way to
+determine which mailbox a message should be delivered to, but provide no way to
+automatically process that message once delivered.
+
+For example, it may be desirable to automatically set all spam messages to be
+"seen" so that they don't appear in an unread message count.
+
+C<mddeliver> is a simple Perl script which accepts an RFC2822-formatted message
+on its standard input, delivers it to a given Maildir directory, and then sets
+the status of the message according to the arguments provided.
+ 
+=head1 USAGE
+
+	cat message | mddeliver [OPTIONS]
+
+=head1 OPTIONS
+
+=over
+
+=item --help
+
+Display usage and options.
+
+=item --dir=DIRECTORY
+
+The location of the Maildir directory.
+
+=item --draft
+
+The message is a draft.
+
+=item --flagged
+
+The message has been I<flagged> for some purpose, for instance as result of a
+search for spam in a folder.
+
+=item --passed
+
+The message was bounced or forwarded to someone else.
+
+=item --replied
+
+The message has been replied to.
+
+=item --seen
+
+The message has been seen, i.e. it is not "unread".
+
+=back
+
+=head1 SEE ALSO
+
+=over
+
+=item L<Mail::Message>
+
+=item L<Mail::Box::Maildir>
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright 2014 Gavin Brown. This program is Free Software; you can use it and/or
+modify it under the same terms as Perl itself.
+
+=cut
